@@ -27,7 +27,7 @@ class StreamListenerToDataFrame(tweepy.StreamListener):
                                                           source=status.source,
                                                           author_id=status.author.id_str,
                                                           language=status.lang,
-                                                          place=status.place,
+                                                          place='unknown',
                                                           search_key=self.track_key)
             self.engine.execute(ins_tweets)
 
@@ -89,7 +89,7 @@ authors_table = Table('authors', metadata)
 
 # Get the tweepy token and start mining tweets
 auth_token = get_auth_token('src/data/twitter_keys')
-sl = mine_tweets_to_sql(auth_token, '#Brexit', 10, engine, tweet_table, authors_table)
+sl = mine_tweets_to_sql(auth_token, '#Brexit', 100, engine, tweet_table, authors_table)
 
 
 
