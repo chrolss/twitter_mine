@@ -1,7 +1,6 @@
 import tweepy
 from src.data.tweepy_auth import get_auth_token
-from sqlalchemy import create_engine, MetaData, Table
-
+from sqlalchemy import create_engine, MetaData, Table, exc
 
 class StreamListenerToDataFrame(tweepy.StreamListener):
     # A stream listener that is supposed to catch statuses and write them to a dataframe
@@ -22,25 +21,28 @@ class StreamListenerToDataFrame(tweepy.StreamListener):
             self.tweetList.append(status._json)
 
             ins_tweets = self.tweet_table.insert().values(id=status.id_str,
-                                                          text=status.text,
+                                                          content=status.text,
                                                           created_at=status.created_at,
                                                           source=status.source,
                                                           author_id=status.author.id_str,
-                                                          language=status.lang,
+                                                          lang=status.lang,
                                                           place='unknown',
                                                           search_key=self.track_key)
             self.engine.execute(ins_tweets)
 
             ins_auth = self.user_table.insert().values(id=status.author.id_str,
                                                        name=status.author.name,
-                                                       location=status.author.location,
+                                                       loc=status.author.location,
                                                        favourites_count=status.author.favourites_count,
                                                        followers_count=status.author.followers_count,
                                                        friends_count=status.author.friends_count,
                                                        screen_name=status.author.screen_name,
                                                        statuses_count=status.author.statuses_count,
                                                        description=status.author.description)
-            self.engine.execute(ins_auth)
+            try:
+                self.engine.execute(ins_auth)
+            except exc.IntegrityError:
+                pass
 
             print("Tweet number " + str(self.num_tweets) + " out of " + str(self.max_tweets))
             return True
@@ -84,14 +86,11 @@ engine = create_engine(engine_path)
 con = engine.connect()
 metadata = MetaData()
 metadata.reflect(engine)
-tweet_table = Table('tweets', metadata)
-authors_table = Table('authors', metadata)
+tweet_table = Table('trump_tweets', metadata)
+authors_table = Table('users', metadata)
 
 # Get the tweepy token and start mining tweets
 auth_token = get_auth_token('src/data/twitter_keys')
-sl = mine_tweets_to_sql(auth_token, '#Brexit', 100, engine, tweet_table, authors_table)
-
-
-
+sl = mine_tweets_to_sql(auth_token, '@realdonaldtrump', 1000, engine, tweet_table, authors_table)
 
 
