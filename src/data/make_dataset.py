@@ -2,6 +2,7 @@ import tweepy
 from src.data.tweepy_auth import get_auth_token
 from sqlalchemy import create_engine, MetaData, Table, exc
 
+
 class StreamListenerToDataFrame(tweepy.StreamListener):
     # A stream listener that is supposed to catch statuses and write them to a dataframe
 
@@ -28,7 +29,10 @@ class StreamListenerToDataFrame(tweepy.StreamListener):
                                                           lang=status.lang,
                                                           place='unknown',
                                                           search_key=self.track_key)
-            self.engine.execute(ins_tweets)
+            try:
+                self.engine.execute(ins_tweets)
+            except exc.IntegrityError:
+                pass
 
             ins_auth = self.user_table.insert().values(id=status.author.id_str,
                                                        name=status.author.name,
@@ -91,6 +95,6 @@ authors_table = Table('users', metadata)
 
 # Get the tweepy token and start mining tweets
 auth_token = get_auth_token('src/data/twitter_keys')
-sl = mine_tweets_to_sql(auth_token, '@realdonaldtrump', 1000, engine, tweet_table, authors_table)
+sl = mine_tweets_to_sql(auth_token, '@realdonaldtrump', 10000, engine, tweet_table, authors_table)
 
 
