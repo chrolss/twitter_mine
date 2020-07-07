@@ -8,6 +8,6 @@ token = get_auth_token('data/twitter_keys')
 
 dirname = os.path.dirname(__file__)
 # Test the new HDFS StreamListener
-my_stream_listener = StreamListenerHDFS(10000, 500, 'blm', dirname)
+my_stream_listener = StreamListenerHDFS(30000, 1200, 'blm', dirname)
 my_stream = tweepy.Stream(auth=token.auth, listener=my_stream_listener)
 my_stream.filter(track=['#BLM'])
